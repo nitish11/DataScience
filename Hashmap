@@ -1,0 +1,194 @@
+//Program : Hash-map implementation
+//Author : Nitish Bhardwaj
+//Date : 3rd February, 2014 
+
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<string>
+using namespace std;
+
+#define m 21001   //number_of_buckets, m>100, m is prime, not close to pow(2,i)-1 
+#define alpha 26 //number_of_characters in key, a-z
+
+struct double_list
+{
+	string value;
+	string key;
+	double_list *prev;
+	double_list *next;
+	double_list()
+	{
+		key="";	
+		value="";
+		prev = NULL;
+		next = NULL;
+	}
+};
+
+
+double_list *hash_map[m];  //array of double_list of size m (0 to m-1)
+
+
+//Helper fucntion for calculation of power of alpha
+int modexponent(int j) 
+{
+  int i,result = 1;
+  for(i=1; i<=j; i++)
+  	result = (result*alpha)%m; 	
+  return result;
+}
+
+//Function to calculate hash value of key
+int hashing_key(string s)
+{
+	int key,i,j,k,l;
+	l = s.size();
+	
+	//Hash Function taken from 3.7 Skiena
+	//H(s) = summation of i=0 to |s|-1  (pow(alpha,|s|-i-1) * char(s[i]))
+	//char(s[i])= (int)s[i]-97		ascii of 'a'=97
+	//key = H(s) mod m
+	
+	key=0;
+	for(i=0; i<l; i++)
+	{
+		j = l-(i+1);
+		k = s[i]-97;
+		key = (key + ((modexponent(j) * k)%m))%m;
+	}
+	return key;
+}
+
+
+//Helper function to insert value to assigned key
+void insert_list(int pos_key,string key,string value)
+{
+  double_list *new_node, *node, *head;	
+  head = hash_map[pos_key];
+  
+  //Colllision free addition
+  if(head->value=="")
+  {
+  	  head->key = key;	
+      head->value = value;
+      head->prev = NULL;
+	  head->next = NULL;	
+	  
+  }
+  //Addition of value in case of collision
+  else
+  {
+	new_node = new (struct double_list); 
+	new_node->key = key;	
+	new_node->value  = value;
+    node=head;
+    
+  	while(node->next!=NULL)
+  		node= node->next;
+	new_node->prev = node;
+	node->next=new_node;
+	new_node->next = NULL;	
+  }
+}
+  
+ 
+//Helper function to delete value from input key
+void delete_list(int pos_key,string key)
+{
+  double_list *new_node, *node;	
+  node = hash_map[pos_key];  
+  	while(!(node->next==NULL || node->key==key))
+  	{
+  		node=node->next;
+  	}
+  	new_node=node;
+  	node=node->next;
+  	delete(new_node);
+}
+
+//Function to create an empty hash-map
+void create_empty_hash()
+{
+	int i;
+	for(i=0; i<m; i++)
+	 hash_map[i] = new double_list(); 
+}
+
+//Function to insert key value pair
+void insert(string key,string value)
+{
+	int pos_key = hashing_key(key);
+	insert_list(pos_key,key,value);
+}
+
+//Function to delete value from input key
+void delete_key(string key)
+{
+	int pos_key = hashing_key(key);
+	delete_list(pos_key,key);
+}
+
+//Function to search value for input key
+string search_key(string key)
+{
+	int pos_key = hashing_key(key);
+	struct double_list *node;	
+  	node = new (struct double_list); 
+  	node = hash_map[pos_key];  
+
+	while(node!=NULL)
+	{
+		if(node->key==key) return node->value;
+		node=node->next;
+	}
+	
+	return "NULL";    //if key is not found
+}
+
+
+//Main Program to be executed
+
+int main()
+{
+	int choice;
+	string key,value;
+	create_empty_hash();
+	
+	/*
+	To do operations on hash-map and time-complexity analysis
+	1.create empty hash-map : O(m)
+	2.insert(key,value) pair : O(1) in case of no collision
+	3.delete a key from hash-map if present : O(1) in case of no collision
+	4.search a key and print value : O(1) 
+	
+	In case of collision: insert and delete operations depend on the num_of_values added on that key
+	*/
+	
+	while(1)
+	{
+		cout<<"Enter \n1. create empty hash-map \n2. insert(key,value) \n3. delete(key) \n4. search(key) \n";
+		cin>>choice;		
+		if(choice==-1) break;  //-1 to exit()
+		
+		if(choice==1)	
+					create_empty_hash();
+		else if(choice==2)
+				{
+					cin>>key>>value;
+					insert(key,value);
+				}	
+		else if(choice==3)
+				{
+					cin>>key;
+					delete_key(key);
+				}	
+		else if(choice==4)
+				{
+					cin>>key; 
+			    	cout<<search_key(key)<<endl;
+				}	
+		else cout<<"Enter -1 to exit"<<endl;
+	}
+	return 0;
+}
